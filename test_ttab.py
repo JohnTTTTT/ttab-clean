@@ -18,7 +18,7 @@ def main(init_config):
 
     # 2) build test loader (you can skip this if you only want weights)
     test_data_cls = define_dataset.ConstructTestDataset(config=config)
-    test_loader = test_data_cls.construct_test_loader(scenario=scenario)
+    test_loader = test_data_cls.construct_test_loader(scenario=scenario) #Worth tracing this back
 
     # 3) instantiate & load
     model = define_model(config=config)

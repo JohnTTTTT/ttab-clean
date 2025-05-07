@@ -19,5 +19,4 @@ todo/
 *.ipynb
 *.txt
 AffectNet7_37k_balanced/
-datasets/
 venv/
