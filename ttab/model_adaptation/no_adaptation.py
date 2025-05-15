@@ -45,6 +45,7 @@ class NoAdaptation(BaseAdaptation):
 
         for name, child in module.named_children():
             module_output.add_module(name, self.convert_iabn(child, **kwargs))
+            print("lmao")
         del module
         return module_output
 

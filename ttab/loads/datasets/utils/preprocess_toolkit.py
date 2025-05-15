@@ -201,13 +201,11 @@ def get_transform(
             ])
         else:
             # FMAE-IAT eval-time pipeline
-            transform = transforms.Compose([
-            transforms.Resize(256,
-                              interpolation=transforms.InterpolationMode.BICUBIC),
-            transforms.CenterCrop(input_size),
-            transforms.ToTensor(),
-            normalize,
-        ])
+            transform = transforms.Compose(
+            [transforms.Resize([224, 224]),
+             transforms.ToTensor(),
+             transforms.Normalize(mean, std)]
+        )
 
         return transform
     else:

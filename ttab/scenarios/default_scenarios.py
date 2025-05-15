@@ -6,7 +6,7 @@ from ttab.scenarios import HomogeneousNoMixture, Scenario, TestCase, TestDomain
 default_scenarios = {
     "S1": Scenario(
         task="classification",
-        model_name="vit",
+        model_name="vit_large_patch16_224",
         model_adaptation_method="no_adaptation",
         model_selection_method="last_iterate",
         base_data_name="affectnet",
@@ -33,7 +33,7 @@ default_scenarios = {
             data_wise="batch_wise",
             offline_pre_adapt=False,
             episodic=False,
-            intra_domain_shuffle=True,
+            intra_domain_shuffle=False,
         ),
     ),
 }

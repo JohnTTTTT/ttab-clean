@@ -7,7 +7,7 @@ import ttab.model_adaptation.utils as adaptation_utils
 from torch import nn
 from ttab.loads.models import WideResNet, cct_7_3x1_32, resnet
 from ttab.loads.models.resnet import ResNetCifar, ResNetImagenet, ResNetMNIST
-from ttab.models_vit import MyAffectNetViT
+from ttab.models_vit import vit_large_patch16
 
 class SelfSupervisedModel(nn.Module):
     """
@@ -136,9 +136,12 @@ def define_model(config):
             grad_checkpoint=config.grad_checkpoint,
         )
     elif "vit_large_patch16_224" in config.model_name:
-        init_model = MyAffectNetViT(n_classes=config.statistics["n_classes"])
-        if config.grad_checkpoint:
-            init_model.set_grad_checkpointing()
+        init_model = vit_large_patch16(
+            num_classes    = config.statistics["n_classes"],
+            drop_path_rate = getattr(config, "model_drop_path_rate", 0.0),
+            global_pool    = True,
+            grad_reverse   = 0,
+        )
     elif "cct" in config.model_name:
         return cct_7_3x1_32(pretrained=False)  # not support TTT yet.
     else:
@@ -178,14 +181,35 @@ def load_pretrained_model(config, model):
     if isinstance(model, SelfSupervisedModel):
         model.load_pretrained_parameters(config.ckpt_path)
     else:
-        ckpt = torch.load(config.ckpt_path, map_location=config.device)
-        orig = ckpt["model"]
-        mapped = {}
-        for k, v in orig.items():
-            mapped[f"backbone.{k}"] = v
-            # make backbone.norm.* point to the same weights as fc_norm
-            if k.startswith("fc_norm."):
-                suffix = k.split(".", 1)[1]           # e.g. "weight" or "bias"
-                mapped[f"backbone.norm.{suffix}"] = v
+        # ——— Mirror test_fmae_works.py weight loading ———
+        from fmae_iat_files.pos_embed import interpolate_pos_embed
 
-        model.load_state_dict(mapped, strict=False)
+        # 1) Load checkpoint onto CPU
+        ckpt = torch.load(config.ckpt_path, map_location='cpu')
+        state = ckpt.get("model", ckpt)
+
+        # 2) Print raw checkpoint keys & shapes
+        print(f"[define_model] checkpoint keys ({len(state)}):")
+        for k, v in state.items():
+            print(f"  {k:40} -> {tuple(v.shape)}")
+
+        # 3) Map checkpoint keys directly (no 'backbone.' prefix)
+        mapped = {}
+        model_sd = model.state_dict()
+        for k, v in state.items():
+            if k in model_sd and v.shape == model_sd[k].shape:
+                mapped[k] = v
+            else:
+                print(f"[define_model] skipped key {k} (no match or shape mismatch)")
+
+        # 4) Interpolate positional embeddings, load weights, move to device
+        interpolate_pos_embed(model, mapped)
+        msg = model.load_state_dict(mapped, strict=False)
+        print(f"[define_model] missing keys:   {msg.missing_keys}")
+        print(f"[define_model] unexpected keys: {msg.unexpected_keys}")
+        model.to(config.device)
+
+        # 5) Print final model state keys & shapes to verify
+        print(f"[define_model] model.state_dict() ({len(model.state_dict())}):")
+        for k, v in model.state_dict().items():
+            print(f"  {k:40} -> {tuple(v.shape)}")
