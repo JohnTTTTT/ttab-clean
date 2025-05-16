@@ -15,7 +15,7 @@ default_scenarios = {
             TestDomain(
                 base_data_name="affectnet",
                 data_name="affectnet",
-                shift_type="no_shift",
+                shift_type="natural",
                 shift_property=SyntheticShiftProperty(
                     shift_degree=5,
                     shift_name="gaussian_noise",

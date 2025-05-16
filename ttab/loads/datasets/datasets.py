@@ -831,7 +831,6 @@ class AffectNetDataset(PyTorchDataset):
 
         # Number of classes in AffectNet
         num_classes = dataset_defaults["affectnet"]["statistics"]["n_classes"]
-        assert data_shift_class is not None, "data_shift_class is required."
 
         # Map 'test' to 'val' folder
         folder = "val" if split == "test" else split
@@ -844,14 +843,10 @@ class AffectNetDataset(PyTorchDataset):
             target_transform=self.target_transform,
         )
 
-        # Apply shift wrapper
-        if issubclass(data_shift_class.func, NoShiftedData):
-            dataset = data_shift_class(dataset=raw)
-        elif issubclass(data_shift_class.func, SyntheticShiftedData):
-            dataset = data_shift_class(dataset=raw)
-            dataset.apply_corruption()
+        if data_shift_class is None:
+            dataset = raw
         else:
-            raise ValueError(f"Unsupported data_shift_class: {data_shift_class}")
+            dataset = data_shift_class(dataset=raw)
 
         # Ensure wrapper exposes transform attrs for downstream merge
         setattr(dataset, "transform", self.transform)

@@ -19,7 +19,7 @@ def get_args():
     
     # define test evaluation info.
     parser.add_argument("--root_path", default="./logs", type=str)
-    parser.add_argument("--data_path", default="./datasets", type=str)
+    parser.add_argument("--data_path", default="/root/ttab/RAF-DB", type=str)
     parser.add_argument(
         "--ckpt_path",
         default="./AffectNet7-66_14.pth",

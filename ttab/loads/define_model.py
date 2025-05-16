@@ -188,11 +188,6 @@ def load_pretrained_model(config, model):
         ckpt = torch.load(config.ckpt_path, map_location='cpu')
         state = ckpt.get("model", ckpt)
 
-        # 2) Print raw checkpoint keys & shapes
-        print(f"[define_model] checkpoint keys ({len(state)}):")
-        for k, v in state.items():
-            print(f"  {k:40} -> {tuple(v.shape)}")
-
         # 3) Map checkpoint keys directly (no 'backbone.' prefix)
         mapped = {}
         model_sd = model.state_dict()
@@ -205,11 +200,4 @@ def load_pretrained_model(config, model):
         # 4) Interpolate positional embeddings, load weights, move to device
         interpolate_pos_embed(model, mapped)
         msg = model.load_state_dict(mapped, strict=False)
-        print(f"[define_model] missing keys:   {msg.missing_keys}")
-        print(f"[define_model] unexpected keys: {msg.unexpected_keys}")
         model.to(config.device)
-
-        # 5) Print final model state keys & shapes to verify
-        print(f"[define_model] model.state_dict() ({len(model.state_dict())}):")
-        for k, v in model.state_dict().items():
-            print(f"  {k:40} -> {tuple(v.shape)}")

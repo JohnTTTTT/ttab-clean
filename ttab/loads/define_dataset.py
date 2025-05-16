@@ -569,15 +569,34 @@ class ConstructTestDataset(object):
                 val/<class_label>/*.jpg
         """
         # Use the absolute path to your balanced AffectNet val folder
-        root = "/root/ttab/AffectNet7_37k_balanced"
+        domain_path = self.data_path
 
         # Use the TestDomain data_name (usually "affectnet") for wrapping
         data_name = test_domain.data_name
-        shift_cls = functools.partial(NoShiftedData, data_name=data_name)
+
+        # get data_shift_class
+        if test_domain.shift_type == "no_shift":
+            shift_cls = functools.partial(NoShiftedData, data_name=data_name)
+        elif test_domain.shift_type == "natural":
+            shift_cls = functools.partial(
+            NaturalShiftedData,
+            data_name=test_domain.data_name,
+            new_data=AffectNetDataset(
+                root=domain_path,
+                data_name=data_name,
+                split=split,
+                device=self.device,
+            ).dataset,
+        )
+        else:
+            raise NotImplementedError(
+                f"invalid shift type={test_domain.shift_type} for affectnet dataset."
+            )
+
 
         # Instantiate and return the custom dataset
         return AffectNetDataset(
-            root=root,
+            root=domain_path,
             data_name=data_name,
             split=split,
             device=self.device,
